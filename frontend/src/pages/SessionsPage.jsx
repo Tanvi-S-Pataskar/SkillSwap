@@ -27,7 +27,7 @@ const SessionsPage = () => {
     try {
       setLoading(true);
       const res = await api.get(`/sessions?user_id=${user?.id || 1}&status=${statusFilter}`);
-      setSessions(res.data);
+      setSessions(Array.isArray(res.data) ? res.data : []);
     } catch (err) {
       console.error('Failed to load sessions', err);
     } finally {

@@ -25,9 +25,10 @@ const MessagesPage = () => {
     const fetchConversations = async () => {
       try {
         const res = await api.get(`/messages/conversations?user_id=${user?.id || 1}`);
-        setConversations(res.data);
-        if (res.data.length > 0 && !searchParams.get('with')) {
-          setActivePartnerId(res.data[0].partner_id);
+        const convList = Array.isArray(res.data) ? res.data : [];
+        setConversations(convList);
+        if (convList.length > 0 && !searchParams.get('with')) {
+          setActivePartnerId(convList[0].partner_id);
         }
       } catch (err) {
         console.error('Failed to load conversations', err);
@@ -45,7 +46,7 @@ const MessagesPage = () => {
         const res = await api.get(
           `/messages/thread/${activePartnerId}?user_id=${user?.id || 1}`
         );
-        setActiveThread(res.data);
+        setActiveThread(Array.isArray(res.data) ? res.data : []);
       } catch (err) {
         console.error('Failed to load thread', err);
       } finally {

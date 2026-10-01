@@ -2,8 +2,10 @@ from datetime import datetime, timedelta
 from sqlalchemy.orm import Session
 from .models import (
     User, Skill, UserSkill, Session as SessionModel, Review, Certificate,
-    Message, LearningGoal, Badge, UserBadge, Project, Notification
+    Message, LearningGoal, Badge, UserBadge, Project, Notification,
+    Profile, Availability
 )
+from .security import hash_password
 
 def seed_database(db: Session):
     # Check if already seeded
@@ -243,10 +245,37 @@ def seed_database(db: Session):
         learn_list = s_info.pop("learn")
         certs_list = s_info.pop("certs")
         
+        # Add auth and profile defaults
+        username_slug = s_info["name"].lower().replace(" ", "_")
+        s_info["username"] = username_slug
+        s_info["password_hash"] = hash_password("demo123")
+        s_info["college"] = s_info.get("university", "UC Berkeley")
+        s_info["course"] = s_info.get("major", "Computer Science")
+        s_info["academic_year"] = "Senior (4th Year)" if s_info.get("graduation_year", 2026) <= 2025 else "Junior (3rd Year)"
+        s_info["is_onboarded"] = True
+        s_info["terms_agreed"] = True
+        
         user = User(**s_info)
         db.add(user)
         db.flush()
         created_users.append(user)
+
+        # Attach Profile
+        profile = Profile(
+            user_id=user.id,
+            learning_style="One-to-one, Project-based",
+            skill_level="Advanced" if user.level > 5 else "Intermediate",
+            headline=f"{user.course} student @ {user.college}"
+        )
+        db.add(profile)
+
+        # Attach default Availability
+        availabilities = [
+            Availability(user_id=user.id, day_of_week="Monday", time_slots="Evening (5 PM - 8 PM)", is_available=True),
+            Availability(user_id=user.id, day_of_week="Wednesday", time_slots="Afternoon (2 PM - 5 PM)", is_available=True),
+            Availability(user_id=user.id, day_of_week="Saturday", time_slots="Morning (10 AM - 1 PM)", is_available=True),
+        ]
+        db.add_all(availabilities)
 
         # Attach User Skills
         for skill_name, prof in teach_list:

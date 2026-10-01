@@ -30,7 +30,7 @@ const Navbar = () => {
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
   const [personaModalOpen, setPersonaModalOpen] = useState(false);
   const location = useRouterLocation();
-  const { user, switchUser, switchableUsers } = useAuth();
+  const { user, switchUser, switchableUsers, logout } = useAuth();
 
   const navLinks = [
     { name: 'Home', path: '/' },
@@ -234,6 +234,17 @@ const Navbar = () => {
                         >
                           Settings
                         </RouterLink>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            logout();
+                            setUserDropdownOpen(false);
+                          }}
+                          className="flex items-center gap-2.5 w-full text-left px-4 py-2 text-xs text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 transition-colors"
+                        >
+                          <LogOut className="w-4 h-4" />
+                          Sign Out
+                        </button>
                       </div>
                     </div>
                   )}
@@ -313,18 +324,34 @@ const Navbar = () => {
             >
               Messages
             </RouterLink>
-            <div className="flex gap-2 pt-2">
-              <RouterLink to="/login" className="flex-1" onClick={() => setMobileMenuOpen(false)}>
-                <Button variant="secondary" size="sm" className="w-full">
-                  Login
-                </Button>
-              </RouterLink>
-              <RouterLink to="/register" className="flex-1" onClick={() => setMobileMenuOpen(false)}>
-                <Button variant="primary" size="sm" className="w-full">
-                  Register
-                </Button>
-              </RouterLink>
-            </div>
+            {user ? (
+              <div className="pt-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    logout();
+                    setMobileMenuOpen(false);
+                  }}
+                  className="w-full flex items-center justify-center gap-2 py-2 px-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400 hover:text-rose-300 text-xs font-semibold"
+                >
+                  <LogOut className="w-4 h-4" />
+                  Sign Out ({user.name})
+                </button>
+              </div>
+            ) : (
+              <div className="flex gap-2 pt-2">
+                <RouterLink to="/login" className="flex-1" onClick={() => setMobileMenuOpen(false)}>
+                  <Button variant="secondary" size="sm" className="w-full">
+                    Login
+                  </Button>
+                </RouterLink>
+                <RouterLink to="/register" className="flex-1" onClick={() => setMobileMenuOpen(false)}>
+                  <Button variant="primary" size="sm" className="w-full">
+                    Register
+                  </Button>
+                </RouterLink>
+              </div>
+            )}
           </div>
         </div>
       )}

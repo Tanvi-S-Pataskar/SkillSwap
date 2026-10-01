@@ -28,7 +28,7 @@ const CertificatesPage = () => {
     try {
       setLoading(true);
       const res = await api.get(`/certificates?user_id=${user?.id || 1}`);
-      setCerts(res.data);
+      setCerts(Array.isArray(res.data) ? res.data : []);
     } catch (err) {
       console.error('Failed to load certificates', err);
     } finally {

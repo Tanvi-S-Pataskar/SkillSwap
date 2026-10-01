@@ -1,5 +1,5 @@
 from pydantic import BaseModel, EmailStr
-from typing import List, Optional
+from typing import List, Optional, Any, Dict
 from datetime import datetime
 
 class SkillBase(BaseModel):
@@ -25,6 +25,23 @@ class UserSkillOut(BaseModel):
     skill_type: str
     proficiency: str
     endorsements_count: int
+
+    class Config:
+        from_attributes = True
+
+class ProfileOut(BaseModel):
+    learning_style: Optional[str] = "One-to-one, Project-based"
+    skill_level: Optional[str] = "Intermediate"
+    headline: Optional[str] = ""
+
+    class Config:
+        from_attributes = True
+
+class AvailabilityOut(BaseModel):
+    id: Optional[int] = None
+    day_of_week: str
+    time_slots: str
+    is_available: bool = True
 
     class Config:
         from_attributes = True
@@ -79,12 +96,17 @@ class LearningGoalCreate(BaseModel):
 class UserSummary(BaseModel):
     id: int
     name: str
+    username: Optional[str] = None
     email: str
     avatar_url: Optional[str] = ""
     university: str
     major: str
+    college: Optional[str] = ""
+    course: Optional[str] = ""
+    academic_year: Optional[str] = "Junior (3rd Year)"
     graduation_year: int
     bio: Optional[str] = ""
+    is_onboarded: bool = False
     rating: float
     review_count: int
     sessions_completed: int
@@ -100,22 +122,40 @@ class UserSummary(BaseModel):
 
 class UserProfileOut(UserSummary):
     skills: List[UserSkillOut] = []
+    profile: Optional[ProfileOut] = None
+    availabilities: List[AvailabilityOut] = []
     certificates: List[CertificateOut] = []
     learning_goals: List[LearningGoalOut] = []
     badges: List[BadgeOut] = []
 
 class UserLogin(BaseModel):
-    email: str
+    email: str # email or username
     password: str
+    remember_me: Optional[bool] = False
 
 class UserRegister(BaseModel):
     name: str
-    email: str
+    username: str
+    email: EmailStr
     password: str
-    university: Optional[str] = "UC Berkeley"
-    major: Optional[str] = "Computer Science"
-    teaching_skills: Optional[List[str]] = []
-    learning_skills: Optional[List[str]] = []
+    confirm_password: Optional[str] = None
+    college: Optional[str] = "UC Berkeley"
+    course: Optional[str] = "Computer Science"
+    academic_year: Optional[str] = "Junior (3rd Year)"
+    avatar_url: Optional[str] = ""
+    agree_terms: Optional[bool] = True
+
+class ForgotPasswordRequest(BaseModel):
+    email: EmailStr
+
+class OnboardingSubmit(BaseModel):
+    teaching_skills: List[str] = []
+    learning_skills: List[str] = []
+    skill_level: str = "Intermediate" # Beginner, Intermediate, Advanced
+    learning_styles: List[str] = ["One-to-one"]
+    availability: List[Dict[str, Any]] = [] # [{day: "Monday", slots: ["Morning", "Evening"]}]
+    bio: Optional[str] = ""
+    avatar_url: Optional[str] = ""
 
 class SessionCreate(BaseModel):
     teacher_id: int

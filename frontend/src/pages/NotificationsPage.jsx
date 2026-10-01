@@ -17,7 +17,7 @@ const NotificationsPage = () => {
       try {
         setLoading(true);
         const res = await api.get(`/community/notifications?user_id=${user?.id || 1}`);
-        setNotifications(res.data);
+        setNotifications(Array.isArray(res.data) ? res.data : []);
       } catch (err) {
         console.error('Failed to load notifications', err);
       } finally {

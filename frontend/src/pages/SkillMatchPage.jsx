@@ -19,7 +19,8 @@ const SkillMatchPage = () => {
       try {
         setLoading(true);
         const res = await api.get('/students');
-        const otherStudents = res.data.filter((s) => s.id !== (user?.id || 1));
+        const studentsList = Array.isArray(res.data) ? res.data : [];
+        const otherStudents = studentsList.filter((s) => s.id !== (user?.id || 1));
 
         // Mock smart matching algorithm:
         // Match percentage based on complementary skills
@@ -27,10 +28,12 @@ const SkillMatchPage = () => {
         const myLearns = (user?.learning_skills || ['Figma & UI/UX Design', 'Conversational Japanese']);
 
         const calculated = otherStudents.map((st) => {
-          const directCanTeachMe = st.teaching_skills.filter((sk) =>
+          const sTeaches = Array.isArray(st.teaching_skills) ? st.teaching_skills : [];
+          const sLearns = Array.isArray(st.learning_skills) ? st.learning_skills : [];
+          const directCanTeachMe = sTeaches.filter((sk) =>
             myLearns.some((ml) => ml.toLowerCase().includes(sk.toLowerCase()) || sk.toLowerCase().includes(ml.toLowerCase()))
           );
-          const directWantsFromMe = st.learning_skills.filter((sk) =>
+          const directWantsFromMe = sLearns.filter((sk) =>
             myTeaches.some((mt) => mt.toLowerCase().includes(sk.toLowerCase()) || sk.toLowerCase().includes(mt.toLowerCase()))
           );
 

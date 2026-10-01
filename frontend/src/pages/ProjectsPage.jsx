@@ -29,7 +29,7 @@ const ProjectsPage = () => {
     try {
       setLoading(true);
       const res = await api.get('/community/projects');
-      setProjects(res.data);
+      setProjects(Array.isArray(res.data) ? res.data : []);
     } catch (err) {
       console.error('Failed to load projects', err);
     } finally {

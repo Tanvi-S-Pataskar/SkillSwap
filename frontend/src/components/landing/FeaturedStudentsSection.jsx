@@ -7,17 +7,67 @@ import Badge from '../ui/Badge';
 import Rating from '../ui/Rating';
 import Button from '../ui/Button';
 
+const FALLBACK_STUDENTS = [
+  {
+    id: 1,
+    name: 'Maya Lin',
+    university: 'UC Berkeley',
+    major: 'Computer Science',
+    avatar_url: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&auto=format&fit=crop&q=80',
+    rating: 4.95,
+    review_count: 28,
+    sessions_completed: 34,
+    xp: 3420,
+    level: 6,
+    teaching_skills: ['Python & Data Structures', 'React & Next.js'],
+    learning_skills: ['Figma & UI/UX Design', 'Conversational Japanese'],
+    is_verified: true,
+  },
+  {
+    id: 2,
+    name: 'Liam Vance',
+    university: 'Stanford University',
+    major: 'Product Design & HCI',
+    avatar_url: 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=400&auto=format&fit=crop&q=80',
+    rating: 4.98,
+    review_count: 42,
+    sessions_completed: 51,
+    xp: 4850,
+    level: 8,
+    teaching_skills: ['Figma & UI/UX Design', '3D Modeling with Blender'],
+    learning_skills: ['Rust Systems Programming', 'Machine Learning & PyTorch'],
+    is_verified: true,
+  },
+  {
+    id: 3,
+    name: 'Aarav Sharma',
+    university: 'MIT',
+    major: 'Electrical Eng & CS',
+    avatar_url: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&auto=format&fit=crop&q=80',
+    rating: 4.92,
+    review_count: 31,
+    sessions_completed: 39,
+    xp: 3900,
+    level: 7,
+    teaching_skills: ['Python & Data Structures', 'Rust Systems Programming'],
+    learning_skills: ['Business Spanish', 'Startup Pitching & VC Decks'],
+    is_verified: true,
+  },
+];
+
 const FeaturedStudentsSection = () => {
-  const [students, setStudents] = useState([]);
+  const [students, setStudents] = useState(FALLBACK_STUDENTS);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchFeatured = async () => {
       try {
         const res = await api.get('/students/featured?limit=6');
-        setStudents(res.data);
+        if (Array.isArray(res.data) && res.data.length > 0) {
+          setStudents(res.data);
+        }
       } catch (err) {
-        console.error('Failed to load featured students', err);
+        // Keeps fallback students
       } finally {
         setLoading(false);
       }

@@ -26,7 +26,7 @@ const StudentsPage = () => {
         if (query) url += `&q=${encodeURIComponent(query)}`;
         if (skillFilter) url += `&skill=${encodeURIComponent(skillFilter)}`;
         const res = await api.get(url);
-        setStudents(res.data);
+        setStudents(Array.isArray(res.data) ? res.data : []);
       } catch (err) {
         console.error('Failed to load students', err);
       } finally {

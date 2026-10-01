@@ -15,7 +15,7 @@ const CalendarPage = () => {
     const fetchSessions = async () => {
       try {
         const res = await api.get(`/sessions?user_id=${user?.id || 1}`);
-        setSessions(res.data);
+        setSessions(Array.isArray(res.data) ? res.data : []);
       } catch (err) {
         console.error('Failed to load sessions', err);
       }

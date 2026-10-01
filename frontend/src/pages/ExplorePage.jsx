@@ -23,7 +23,7 @@ const ExplorePage = () => {
         setLoading(true);
         const url = selectedCat === 'All' ? '/skills' : `/skills?category=${selectedCat}`;
         const res = await api.get(url);
-        setSkills(res.data);
+        setSkills(Array.isArray(res.data) ? res.data : []);
       } catch (err) {
         console.error('Failed to load skills', err);
       } finally {

@@ -19,8 +19,8 @@ const CommunityPage = () => {
           api.get('/community/leaderboard'),
           api.get('/community/badges'),
         ]);
-        setLeaderboard(lbRes.data);
-        setBadges(bRes.data);
+        setLeaderboard(Array.isArray(lbRes.data) ? lbRes.data : []);
+        setBadges(Array.isArray(bRes.data) ? bRes.data : []);
       } catch (err) {
         console.error('Failed to load community data', err);
       } finally {

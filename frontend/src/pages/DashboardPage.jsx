@@ -42,9 +42,11 @@ const DashboardPage = () => {
           api.get(`/community/goals?user_id=${user?.id || 1}`),
           api.get('/students/featured?limit=3'),
         ]);
-        setSessions(sessRes.data);
-        setGoals(goalsRes.data);
-        setRecommendedStudents(stuRes.data.filter((s) => s.id !== user?.id));
+        setSessions(Array.isArray(sessRes.data) ? sessRes.data : []);
+        setGoals(Array.isArray(goalsRes.data) ? goalsRes.data : []);
+        setRecommendedStudents(
+          Array.isArray(stuRes.data) ? stuRes.data.filter((s) => s.id !== user?.id) : []
+        );
       } catch (err) {
         console.error('Failed to load dashboard data', err);
       } finally {

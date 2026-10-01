@@ -5,6 +5,7 @@ import { AuthProvider } from './context/AuthContext';
 import Navbar from './components/layout/Navbar';
 import Sidebar from './components/layout/Sidebar';
 import Footer from './components/layout/Footer';
+import ProtectedRoute from './components/auth/ProtectedRoute';
 
 // Pages
 import HomePage from './pages/HomePage';
@@ -57,31 +58,124 @@ function App() {
         <AuthProvider>
           <Layout>
             <Routes>
-              {/* Core Landing & Auth Routes */}
+              {/* Public Routes */}
               <Route path="/" element={<HomePage />} />
               <Route path="/login" element={<LoginPage />} />
               <Route path="/register" element={<RegisterPage />} />
-              <Route path="/onboarding" element={<OnboardingPage />} />
-
-              {/* Application Routes */}
-              <Route path="/dashboard" element={<DashboardPage />} />
               <Route path="/explore" element={<ExplorePage />} />
               <Route path="/skills" element={<SkillsPage />} />
               <Route path="/students" element={<StudentsPage />} />
               <Route path="/student/:id" element={<StudentDetailPage />} />
-              <Route path="/profile" element={<ProfilePage />} />
-              <Route path="/profile/edit" element={<ProfileEditPage />} />
-              <Route path="/certificates" element={<CertificatesPage />} />
-              <Route path="/sessions" element={<SessionsPage />} />
-              <Route path="/calendar" element={<CalendarPage />} />
-              <Route path="/messages" element={<MessagesPage />} />
-              <Route path="/community" element={<CommunityPage />} />
-              <Route path="/projects" element={<ProjectsPage />} />
-              <Route path="/skill-match" element={<SkillMatchPage />} />
-              <Route path="/notifications" element={<NotificationsPage />} />
-              <Route path="/settings" element={<SettingsPage />} />
 
-              {/* Catch-all fallback to HomePage */}
+              {/* Onboarding (Protected, allows new un-onboarded user) */}
+              <Route
+                path="/onboarding"
+                element={
+                  <ProtectedRoute requireOnboarded={false}>
+                    <OnboardingPage />
+                  </ProtectedRoute>
+                }
+              />
+
+              {/* Protected Application Routes */}
+              <Route
+                path="/dashboard"
+                element={
+                  <ProtectedRoute>
+                    <DashboardPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/profile"
+                element={
+                  <ProtectedRoute>
+                    <ProfilePage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/profile/edit"
+                element={
+                  <ProtectedRoute>
+                    <ProfileEditPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/certificates"
+                element={
+                  <ProtectedRoute>
+                    <CertificatesPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/sessions"
+                element={
+                  <ProtectedRoute>
+                    <SessionsPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/calendar"
+                element={
+                  <ProtectedRoute>
+                    <CalendarPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/messages"
+                element={
+                  <ProtectedRoute>
+                    <MessagesPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/community"
+                element={
+                  <ProtectedRoute>
+                    <CommunityPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/projects"
+                element={
+                  <ProtectedRoute>
+                    <ProjectsPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/skill-match"
+                element={
+                  <ProtectedRoute>
+                    <SkillMatchPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/notifications"
+                element={
+                  <ProtectedRoute>
+                    <NotificationsPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/settings"
+                element={
+                  <ProtectedRoute>
+                    <SettingsPage />
+                  </ProtectedRoute>
+                }
+              />
+
+              {/* Catch-all fallback */}
               <Route path="*" element={<HomePage />} />
             </Routes>
           </Layout>

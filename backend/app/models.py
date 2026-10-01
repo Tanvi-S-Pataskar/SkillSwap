@@ -10,28 +10,59 @@ class User(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String(100), nullable=False)
+    username = Column(String(60), unique=True, index=True, nullable=True)
     email = Column(String(120), unique=True, index=True, nullable=False)
-    password_hash = Column(String(255), nullable=False, default="demo123")
+    password_hash = Column(String(255), nullable=False)
     avatar_url = Column(String(255), default="")
-    university = Column(String(120), default="UC Berkeley")
-    major = Column(String(120), default="Computer Science")
+    university = Column(String(120), default="UC Berkeley") # alias for college
+    major = Column(String(120), default="Computer Science")      # alias for course
+    college = Column(String(150), default="UC Berkeley")
+    course = Column(String(150), default="Computer Science")
+    academic_year = Column(String(50), default="Junior (3rd Year)")
     graduation_year = Column(Integer, default=2026)
     bio = Column(Text, default="")
+    is_onboarded = Column(Boolean, default=False)
+    terms_agreed = Column(Boolean, default=True)
     rating = Column(Float, default=5.0)
     review_count = Column(Integer, default=0)
     sessions_completed = Column(Integer, default=0)
-    xp = Column(Integer, default=1250)
-    level = Column(Integer, default=3)
-    time_credits = Column(Integer, default=10) # 1 credit = 1 hour session barter
+    xp = Column(Integer, default=1000)
+    level = Column(Integer, default=1)
+    time_credits = Column(Integer, default=5) # 1 credit = 1 hour session barter
     is_verified = Column(Boolean, default=True)
     created_at = Column(DateTime, default=datetime.utcnow)
 
     # Relationships
+    profile = relationship("Profile", back_populates="user", uselist=False, cascade="all, delete-orphan")
+    availabilities = relationship("Availability", back_populates="user", cascade="all, delete-orphan")
     skills = relationship("UserSkill", back_populates="user", cascade="all, delete-orphan")
     certificates = relationship("Certificate", back_populates="user", cascade="all, delete-orphan")
     learning_goals = relationship("LearningGoal", back_populates="user", cascade="all, delete-orphan")
     badges = relationship("UserBadge", back_populates="user", cascade="all, delete-orphan")
     notifications = relationship("Notification", back_populates="user", cascade="all, delete-orphan")
+
+class Profile(Base):
+    __tablename__ = "profiles"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), unique=True, nullable=False)
+    learning_style = Column(String(255), default="One-to-one, Project-based")
+    skill_level = Column(String(50), default="Intermediate")
+    headline = Column(String(200), default="")
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    user = relationship("User", back_populates="profile")
+
+class Availability(Base):
+    __tablename__ = "availability"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    day_of_week = Column(String(30), nullable=False) # Monday, Tuesday, ...
+    time_slots = Column(String(255), default="Evening (5 PM - 9 PM)")
+    is_available = Column(Boolean, default=True)
+
+    user = relationship("User", back_populates="availabilities")
 
 class Skill(Base):
     __tablename__ = "skills"

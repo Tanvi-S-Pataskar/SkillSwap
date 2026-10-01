@@ -18,8 +18,8 @@ const SkillsPage = () => {
           api.get('/skills/categories'),
           api.get('/skills'),
         ]);
-        setCategories(catsRes.data);
-        setSkills(skillsRes.data);
+        setCategories(Array.isArray(catsRes.data) ? catsRes.data : []);
+        setSkills(Array.isArray(skillsRes.data) ? skillsRes.data : []);
       } catch (err) {
         console.error('Failed to load skills directory', err);
       } finally {
