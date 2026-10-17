@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import api from '../api/client';
+import api, { formatApiError } from '../api/client';
 
 const AuthContext = createContext(null);
 
@@ -62,11 +62,7 @@ export const AuthProvider = ({ children }) => {
       setUser(userData);
       return { success: true, user: userData };
     } catch (err) {
-      const errorMsg =
-        err.response?.data?.detail ||
-        (!err.response
-          ? 'Unable to connect to server. Please ensure the backend is running.'
-          : 'Invalid email/username or password. Please try again.');
+      const errorMsg = formatApiError(err, 'Invalid email/username or password. Please try again.');
       return { success: false, error: errorMsg };
     }
   };
@@ -82,11 +78,7 @@ export const AuthProvider = ({ children }) => {
       fetchSwitchable();
       return { success: true, user: newUser };
     } catch (err) {
-      const errorMsg =
-        err.response?.data?.detail ||
-        (!err.response
-          ? 'Unable to connect to server. Please ensure the backend is running.'
-          : 'Registration failed. Please check your inputs.');
+      const errorMsg = formatApiError(err, 'Registration failed. Please try again.');
       return { success: false, error: errorMsg };
     }
   };
@@ -98,7 +90,7 @@ export const AuthProvider = ({ children }) => {
       setUser(res.data.user);
       return { success: true, user: res.data.user, message: res.data.message };
     } catch (err) {
-      const errorMsg = err.response?.data?.detail || 'Failed to save onboarding details.';
+      const errorMsg = formatApiError(err, 'Failed to save onboarding details.');
       return { success: false, error: errorMsg };
     }
   };
@@ -109,7 +101,8 @@ export const AuthProvider = ({ children }) => {
       const res = await api.post('/auth/forgot-password', { email });
       return { success: true, message: res.data.message };
     } catch (err) {
-      return { success: false, error: err.response?.data?.detail || 'Failed to process request.' };
+      const errorMsg = formatApiError(err, 'Failed to process request.');
+      return { success: false, error: errorMsg };
     }
   };
 
@@ -128,7 +121,7 @@ export const AuthProvider = ({ children }) => {
         success: false,
         error: true,
         available: null,
-        message: 'Could not verify username right now'
+        message: formatApiError(err, 'Could not verify username right now')
       };
     }
   };

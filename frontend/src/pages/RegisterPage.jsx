@@ -185,12 +185,12 @@ const RegisterPage = () => {
       navigate('/onboarding');
     } else {
       showToast(res.error || 'Registration failed', 'error');
-      const errDetail = res.error || '';
+      const errDetail = typeof res.error === 'string' ? res.error : '';
       const fieldErrors = { api: errDetail };
-      if (/username/i.test(errDetail)) {
+      if (/\busername\b/i.test(errDetail) && !/404|backend|endpoint/i.test(errDetail)) {
         fieldErrors.username = errDetail;
       }
-      if (/email/i.test(errDetail)) {
+      if (/\bemail\b/i.test(errDetail) && !/404|backend|endpoint/i.test(errDetail)) {
         fieldErrors.email = errDetail;
       }
       setErrors((prev) => ({ ...prev, ...fieldErrors }));
