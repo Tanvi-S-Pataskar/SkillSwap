@@ -123,8 +123,8 @@ const RegisterPage = () => {
       newErrors.username = 'Username must be at least 3 characters.';
     } else if (!/^[a-zA-Z0-9_-]+$/.test(u)) {
       newErrors.username = 'Only letters, numbers, underscores and dashes allowed.';
-    } else if (usernameStatus && !usernameStatus.available) {
-      newErrors.username = 'This username is already taken.';
+    } else if (usernameStatus && usernameStatus.available === false && !usernameStatus.error) {
+      newErrors.username = usernameStatus.message || 'This username is already taken.';
     }
 
     if (!formData.email.trim()) {
@@ -185,7 +185,15 @@ const RegisterPage = () => {
       navigate('/onboarding');
     } else {
       showToast(res.error || 'Registration failed', 'error');
-      setErrors((prev) => ({ ...prev, api: res.error }));
+      const errDetail = res.error || '';
+      const fieldErrors = { api: errDetail };
+      if (/username/i.test(errDetail)) {
+        fieldErrors.username = errDetail;
+      }
+      if (/email/i.test(errDetail)) {
+        fieldErrors.email = errDetail;
+      }
+      setErrors((prev) => ({ ...prev, ...fieldErrors }));
     }
   };
 
@@ -307,15 +315,19 @@ const RegisterPage = () => {
                   rightIcon={
                     usernameChecking ? (
                       <div className="w-3.5 h-3.5 rounded-full border-2 border-violet-400 border-t-transparent animate-spin" />
-                    ) : usernameStatus?.available ? (
+                    ) : usernameStatus?.available === true ? (
                       <Check className="w-4 h-4 text-emerald-400" />
+                    ) : usernameStatus && usernameStatus.available === false && !usernameStatus.error ? (
+                      <AlertCircle className="w-4 h-4 text-rose-400" />
                     ) : null
                   }
                   error={errors.username}
                   helperText={
                     usernameStatus
-                      ? usernameStatus.available
+                      ? usernameStatus.available === true
                         ? 'Username is available!'
+                        : usernameStatus.error
+                        ? 'Verification unavailable (will verify on submit)'
                         : usernameStatus.message || 'Username taken'
                       : 'Unique student handle'
                   }

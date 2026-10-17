@@ -62,7 +62,11 @@ export const AuthProvider = ({ children }) => {
       setUser(userData);
       return { success: true, user: userData };
     } catch (err) {
-      const errorMsg = err.response?.data?.detail || 'Invalid email or password. Please try again.';
+      const errorMsg =
+        err.response?.data?.detail ||
+        (!err.response
+          ? 'Unable to connect to server. Please ensure the backend is running.'
+          : 'Invalid email/username or password. Please try again.');
       return { success: false, error: errorMsg };
     }
   };
@@ -78,7 +82,11 @@ export const AuthProvider = ({ children }) => {
       fetchSwitchable();
       return { success: true, user: newUser };
     } catch (err) {
-      const errorMsg = err.response?.data?.detail || 'Registration failed. Please check your inputs.';
+      const errorMsg =
+        err.response?.data?.detail ||
+        (!err.response
+          ? 'Unable to connect to server. Please ensure the backend is running.'
+          : 'Registration failed. Please check your inputs.');
       return { success: false, error: errorMsg };
     }
   };
@@ -105,13 +113,23 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // Check username availability
+  // Check username availability - cleanly distinguishes taken vs network error
   const checkUsername = async (username) => {
     try {
       const res = await api.get(`/auth/check-username?username=${encodeURIComponent(username)}`);
-      return res.data;
+      return {
+        success: true,
+        available: Boolean(res.data.available),
+        message: res.data.message || (res.data.available ? 'Username is available!' : 'Username is already taken.')
+      };
     } catch (err) {
-      return { available: false, message: 'Could not verify username' };
+      // Do NOT treat network/server failure as "username taken"!
+      return {
+        success: false,
+        error: true,
+        available: null,
+        message: 'Could not verify username right now'
+      };
     }
   };
 

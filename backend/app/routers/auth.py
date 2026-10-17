@@ -127,7 +127,9 @@ def check_username(username: str, db: Session = Depends(get_db)):
         return {"available": False, "message": "Only letters, numbers, hyphens, and underscores allowed."}
     
     existing = db.query(User).filter(User.username.ilike(cleaned)).first()
-    return {"available": existing is None}
+    if existing:
+        return {"available": False, "message": "Username is already taken. Please choose another."}
+    return {"available": True, "message": "Username is available!"}
 
 @router.post("/register")
 def register(payload: UserRegister, db: Session = Depends(get_db)):
