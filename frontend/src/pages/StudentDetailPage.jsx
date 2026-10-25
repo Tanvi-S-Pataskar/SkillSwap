@@ -263,23 +263,33 @@ const StudentDetailPage = () => {
             </div>
 
             <div className="space-y-4">
-              {(student.reviews || []).map((rev) => (
-                <div
-                  key={rev.id}
-                  className="p-4 rounded-2xl bg-dark-950/60 border border-white/[0.06] space-y-2"
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2.5">
-                      <Avatar src={rev.reviewer_avatar} name={rev.reviewer_name} size="xs" />
-                      <span className="text-xs font-bold text-white">{rev.reviewer_name}</span>
+              {(student.reviews || []).length > 0 ? (
+                student.reviews.map((rev) => (
+                  <div
+                    key={rev.id}
+                    className="p-4 rounded-2xl bg-dark-950/60 border border-white/[0.06] space-y-2"
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2.5">
+                        <Avatar src={rev.reviewer_avatar} name={rev.reviewer_name} size="xs" />
+                        <span className="text-xs font-bold text-white">{rev.reviewer_name}</span>
+                      </div>
+                      <Rating value={rev.rating} showScore={false} size="xs" />
                     </div>
-                    <Rating value={rev.rating} showScore={false} size="xs" />
+                    <p className="text-xs text-slate-300 italic leading-relaxed">
+                      "{rev.comment}"
+                    </p>
                   </div>
-                  <p className="text-xs text-slate-300 italic leading-relaxed">
-                    "{rev.comment}"
-                  </p>
+                ))
+              ) : (
+                <div className="p-6 text-center rounded-2xl bg-dark-950/40 border border-white/[0.04]">
+                  <Star className="w-8 h-8 text-slate-600 mx-auto mb-2 opacity-50" />
+                  <div className="text-xs font-semibold text-slate-300">No peer reviews yet</div>
+                  <div className="text-[11px] text-slate-500 mt-0.5">
+                    Complete a skill swap session with {student.name} to leave the first review!
+                  </div>
                 </div>
-              ))}
+              )}
             </div>
           </div>
         </div>
@@ -300,20 +310,61 @@ const StudentDetailPage = () => {
             </div>
 
             <div className="space-y-3">
-              {(student.certificates || []).map((c) => (
-                <div
-                  key={c.id}
-                  className="p-3.5 rounded-2xl bg-dark-950/60 border border-violet-500/20 space-y-1"
-                >
-                  <div className="text-xs font-bold text-white">{c.title}</div>
-                  <div className="text-[11px] text-slate-400">{c.issuer} · {c.issue_date}</div>
-                  {c.credential_id && (
-                    <div className="text-[10px] text-violet-400 font-mono">
-                      ID: {c.credential_id}
+              {(student.certificates || []).length > 0 ? (
+                (student.certificates || []).map((c) => (
+                  <div
+                    key={c.id}
+                    className="p-3.5 rounded-2xl bg-dark-950/60 border border-violet-500/20 space-y-1.5"
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="text-xs font-bold text-white">{c.title}</div>
+                      <Badge
+                        variant={c.verification_status === 'Verified' || c.is_verified ? 'verified' : 'amber'}
+                        size="sm"
+                        isVerified={c.verification_status === 'Verified' || c.is_verified}
+                      >
+                        {c.verification_status || (c.is_verified ? 'Verified' : 'Pending')}
+                      </Badge>
                     </div>
-                  )}
+                    <div className="text-[11px] text-slate-400">{c.issuer} · {c.issue_date}</div>
+                    {c.related_skill && (
+                      <span className="inline-block text-[10px] px-2 py-0.5 rounded-full bg-violet-500/10 text-violet-300 border border-violet-500/20">
+                        {c.related_skill}
+                      </span>
+                    )}
+                    <div className="flex items-center justify-between pt-1">
+                      {c.credential_id ? (
+                        <div className="text-[10px] text-violet-400 font-mono">
+                          ID: {c.credential_id}
+                        </div>
+                      ) : <span />}
+                      {c.has_file ? (
+                        <a
+                          href={`/api/certificates/${c.id}/file`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-[11px] text-violet-300 hover:text-white inline-flex items-center gap-1 font-medium"
+                        >
+                          <span>View Proof</span>
+                        </a>
+                      ) : c.credential_url ? (
+                        <a
+                          href={c.credential_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-[11px] text-violet-300 hover:text-white inline-flex items-center gap-1 font-medium"
+                        >
+                          <span>Online Proof</span>
+                        </a>
+                      ) : null}
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div className="text-xs text-slate-500 italic py-2 text-center">
+                  No verified certificates listed yet.
                 </div>
-              ))}
+              )}
             </div>
           </div>
 

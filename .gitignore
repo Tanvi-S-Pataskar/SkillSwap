@@ -49,6 +49,11 @@ ENV/
 Thumbs.db
 Desktop.ini
 
+# Uploaded files
+backend/uploads/*
+!backend/uploads/certificates/
+!backend/uploads/certificates/.gitkeep
+
 # Logs
 logs
 *.log

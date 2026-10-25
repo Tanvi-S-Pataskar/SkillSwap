@@ -51,10 +51,18 @@ class CertificateOut(BaseModel):
     title: str
     issuer: str
     issue_date: str
+    related_skill: Optional[str] = ""
     credential_url: Optional[str] = ""
     credential_id: Optional[str] = ""
     badge_icon: Optional[str] = "Award"
-    is_verified: bool
+    is_verified: bool = False
+    verification_status: Optional[str] = "Pending"
+    file_name: Optional[str] = ""
+    file_size: Optional[int] = 0
+    mime_type: Optional[str] = ""
+    has_file: Optional[bool] = False
+    file_url: Optional[str] = ""
+    created_at: Optional[str] = ""
 
     class Config:
         from_attributes = True
@@ -63,9 +71,13 @@ class CertificateCreate(BaseModel):
     title: str
     issuer: str
     issue_date: str
+    related_skill: Optional[str] = ""
     credential_url: Optional[str] = ""
     credential_id: Optional[str] = ""
     badge_icon: Optional[str] = "Award"
+
+class CertificateStatusUpdate(BaseModel):
+    status: str # "Pending", "Verified", "Rejected"
 
 class BadgeOut(BaseModel):
     id: int
@@ -114,6 +126,7 @@ class UserSummary(BaseModel):
     level: int
     time_credits: int
     is_verified: bool
+    is_admin: Optional[bool] = False
     teaching_skills: List[str] = []
     learning_skills: List[str] = []
 
@@ -127,6 +140,24 @@ class UserProfileOut(UserSummary):
     certificates: List[CertificateOut] = []
     learning_goals: List[LearningGoalOut] = []
     badges: List[BadgeOut] = []
+
+class ProfileUpdate(BaseModel):
+    name: Optional[str] = None
+    username: Optional[str] = None
+    avatar_url: Optional[str] = None
+    university: Optional[str] = None
+    major: Optional[str] = None
+    college: Optional[str] = None
+    course: Optional[str] = None
+    academic_year: Optional[str] = None
+    graduation_year: Optional[int] = None
+    bio: Optional[str] = None
+    headline: Optional[str] = None
+    learning_style: Optional[str] = None
+    skill_level: Optional[str] = None
+    availability: Optional[List[Dict[str, Any]]] = None
+    teaching_skills: Optional[List[Any]] = None
+    learning_skills: Optional[List[Any]] = None
 
 class UserLogin(BaseModel):
     email: str # email or username
@@ -170,6 +201,10 @@ class ReviewCreate(BaseModel):
     session_id: int
     rating: float
     comment: str
+
+class ReviewUpdate(BaseModel):
+    rating: Optional[float] = None
+    comment: Optional[str] = None
 
 class ReviewOut(BaseModel):
     id: int

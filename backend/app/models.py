@@ -30,6 +30,7 @@ class User(Base):
     level = Column(Integer, default=1)
     time_credits = Column(Integer, default=5) # 1 credit = 1 hour session barter
     is_verified = Column(Boolean, default=True)
+    is_admin = Column(Boolean, default=False)
     created_at = Column(DateTime, default=datetime.utcnow)
 
     # Relationships
@@ -132,10 +133,17 @@ class Certificate(Base):
     title = Column(String(150), nullable=False)
     issuer = Column(String(120), nullable=False)
     issue_date = Column(String(50), default="2026")
+    related_skill = Column(String(100), default="")
     credential_url = Column(String(255), default="")
     credential_id = Column(String(100), default="")
     badge_icon = Column(String(50), default="Award")
-    is_verified = Column(Boolean, default=True)
+    is_verified = Column(Boolean, default=False)
+    verification_status = Column(String(30), default="Pending") # Pending, Verified, Rejected
+    file_path = Column(String(255), default="")
+    file_name = Column(String(255), default="")
+    file_size = Column(Integer, default=0)
+    mime_type = Column(String(100), default="")
+    created_at = Column(DateTime, default=datetime.utcnow)
 
     user = relationship("User", back_populates="certificates")
 

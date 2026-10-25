@@ -77,3 +77,7 @@ def get_popular_skills(limit: int = 8, db: Session = Depends(get_db)):
             "learner_count": teachers * 2 + 12,
         })
     return results
+
+# Expose skill matches under /skills/matches as well
+from .students import get_skill_matches
+router.add_api_route("/matches", get_skill_matches, methods=["GET"])

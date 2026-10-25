@@ -9,13 +9,13 @@ from ..database import get_db
 from ..models import User, UserSkill, Skill, Profile, Availability, UserBadge, Badge
 from ..schemas import (
     UserLogin, UserRegister, ForgotPasswordRequest, OnboardingSubmit,
-    UserProfileOut, UserSummary
+    UserProfileOut, UserSummary, ProfileUpdate
 )
 from ..security import hash_password, verify_password, create_access_token, get_current_user
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
-def format_user_profile(user: User) -> dict:
+def format_user_profile(user: User, db: Optional[Session] = None) -> dict:
     teaching = [us.skill.name for us in user.skills if us.skill_type == "teach"]
     learning = [us.skill.name for us in user.skills if us.skill_type == "learn"]
     skills_out = []
@@ -37,10 +37,18 @@ def format_user_profile(user: User) -> dict:
             "title": c.title,
             "issuer": c.issuer,
             "issue_date": c.issue_date,
-            "credential_url": c.credential_url,
-            "credential_id": c.credential_id,
-            "badge_icon": c.badge_icon,
-            "is_verified": c.is_verified,
+            "related_skill": getattr(c, "related_skill", "") or "",
+            "credential_url": c.credential_url or "",
+            "credential_id": c.credential_id or "",
+            "badge_icon": c.badge_icon or "Award",
+            "is_verified": bool(c.is_verified),
+            "verification_status": getattr(c, "verification_status", None) or ("Verified" if c.is_verified else "Pending"),
+            "file_name": getattr(c, "file_name", "") or "",
+            "file_size": getattr(c, "file_size", 0) or 0,
+            "mime_type": getattr(c, "mime_type", "") or "",
+            "has_file": bool(getattr(c, "file_path", "")),
+            "file_url": f"/api/certificates/{c.id}/file" if getattr(c, "file_path", "") else "",
+            "created_at": c.created_at.isoformat() if getattr(c, "created_at", None) else "",
         }
         for c in user.certificates
     ]
@@ -79,12 +87,36 @@ def format_user_profile(user: User) -> dict:
     ]
 
     profile_out = None
+    learning_styles_list = []
+    headline_val = ""
+    skill_level_val = "Intermediate"
     if user.profile:
+        raw_styles = getattr(user.profile, "learning_style", "") or ""
+        learning_styles_list = [s.strip() for s in raw_styles.split(",") if s.strip()]
+        headline_val = getattr(user.profile, "headline", "") or ""
+        skill_level_val = getattr(user.profile, "skill_level", "") or "Intermediate"
         profile_out = {
-            "learning_style": user.profile.learning_style,
-            "skill_level": user.profile.skill_level,
-            "headline": user.profile.headline,
+            "learning_style": raw_styles,
+            "learning_styles": learning_styles_list,
+            "skill_level": skill_level_val,
+            "headline": headline_val,
         }
+
+    reviews_out = []
+    if db is not None:
+        from ..models import Review
+        reviews = db.query(Review).filter(Review.reviewee_id == user.id).order_by(Review.created_at.desc()).all()
+        for r in reviews:
+            reviews_out.append({
+                "id": r.id,
+                "session_id": r.session_id,
+                "reviewer_id": r.reviewer_id,
+                "reviewer_name": r.reviewer.name if r.reviewer else "Peer Student",
+                "reviewer_avatar": r.reviewer.avatar_url if r.reviewer else "",
+                "rating": r.rating,
+                "comment": r.comment,
+                "created_at": r.created_at.isoformat() if r.created_at else "",
+            })
 
     return {
         "id": user.id,
@@ -99,6 +131,9 @@ def format_user_profile(user: User) -> dict:
         "academic_year": user.academic_year or "Junior (3rd Year)",
         "graduation_year": user.graduation_year or 2026,
         "bio": user.bio or "",
+        "headline": headline_val,
+        "skill_level": skill_level_val,
+        "learning_styles": learning_styles_list,
         "is_onboarded": user.is_onboarded if user.is_onboarded is not None else True,
         "rating": user.rating,
         "review_count": user.review_count,
@@ -106,15 +141,18 @@ def format_user_profile(user: User) -> dict:
         "xp": user.xp,
         "level": user.level,
         "time_credits": user.time_credits,
-        "is_verified": user.is_verified,
+        "is_verified": bool(user.is_verified),
+        "is_admin": bool(getattr(user, "is_admin", False)),
         "teaching_skills": teaching,
         "learning_skills": learning,
         "skills": skills_out,
         "profile": profile_out,
         "availabilities": availabilities_out,
+        "availability": availabilities_out,
         "certificates": certs_out,
         "learning_goals": goals_out,
         "badges": badges_out,
+        "reviews": reviews_out,
     }
 
 @router.get("/check-username")
@@ -365,9 +403,137 @@ def complete_onboarding(
     }
 
 @router.get("/me")
-def get_me(current_user: User = Depends(get_current_user)):
+@router.get("/profile")
+def get_me(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     """Return currently authenticated student profile."""
-    return format_user_profile(current_user)
+    return format_user_profile(current_user, db=db)
+
+@router.put("/profile")
+def update_profile(
+    payload: ProfileUpdate,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Update profile information, avatar, bio, academic details, learning styles, and availability. Persists to database."""
+    # 1. Username validation & uniqueness
+    if payload.username is not None:
+        u_clean = payload.username.strip().lower()
+        if len(u_clean) < 3:
+            raise HTTPException(status_code=400, detail="Username must be at least 3 characters.")
+        if not re.match("^[a-zA-Z0-9_-]+$", u_clean):
+            raise HTTPException(status_code=400, detail="Username can only contain letters, numbers, underscores, and dashes.")
+        existing = db.query(User).filter(User.username.ilike(u_clean), User.id != current_user.id).first()
+        if existing:
+            raise HTTPException(status_code=400, detail="Username is already taken by another student.")
+        current_user.username = u_clean
+
+    # 2. Basic student info
+    if payload.name is not None:
+        name_clean = payload.name.strip()
+        if not name_clean:
+            raise HTTPException(status_code=400, detail="Full name cannot be empty.")
+        current_user.name = name_clean
+
+    if payload.avatar_url is not None:
+        current_user.avatar_url = payload.avatar_url.strip()
+
+    if payload.bio is not None:
+        current_user.bio = payload.bio.strip()
+
+    if payload.university is not None or payload.college is not None:
+        val = (payload.university or payload.college or "").strip()
+        if val:
+            current_user.university = val
+            current_user.college = val
+
+    if payload.major is not None or payload.course is not None:
+        val = (payload.major or payload.course or "").strip()
+        if val:
+            current_user.major = val
+            current_user.course = val
+
+    if payload.academic_year is not None:
+        current_user.academic_year = payload.academic_year.strip()
+
+    if payload.graduation_year is not None:
+        current_user.graduation_year = payload.graduation_year
+
+    # 3. Profile details (headline, learning_style, skill_level)
+    if not current_user.profile:
+        current_user.profile = Profile(user_id=current_user.id)
+
+    if payload.headline is not None:
+        current_user.profile.headline = payload.headline.strip()
+
+    if payload.learning_style is not None:
+        current_user.profile.learning_style = payload.learning_style.strip()
+
+    if payload.skill_level is not None:
+        current_user.profile.skill_level = payload.skill_level.strip()
+
+    # 4. Weekly Availability
+    if payload.availability is not None:
+        db.query(Availability).filter(Availability.user_id == current_user.id).delete()
+        for item in payload.availability:
+            day = item.get("day", "") or item.get("day_of_week", "")
+            slots = item.get("slots", []) or item.get("time_slots", "")
+            if day and slots:
+                slot_str = ", ".join(slots) if isinstance(slots, list) else str(slots)
+                db.add(Availability(
+                    user_id=current_user.id,
+                    day_of_week=day,
+                    time_slots=slot_str,
+                    is_available=True
+                ))
+
+    # 5. Teaching skills
+    if payload.teaching_skills is not None:
+        db.query(UserSkill).filter(UserSkill.user_id == current_user.id, UserSkill.skill_type == "teach").delete()
+        for item in payload.teaching_skills:
+            s_name = item.get("name") if isinstance(item, dict) else str(item)
+            s_prof = item.get("proficiency", "Intermediate") if isinstance(item, dict) else "Intermediate"
+            s_clean = s_name.strip()
+            if s_clean:
+                skill = db.query(Skill).filter(Skill.name.ilike(s_clean)).first()
+                if not skill:
+                    skill = Skill(name=s_clean, category="Tech", icon="Code", description=f"Student taught {s_clean}")
+                    db.add(skill)
+                    db.flush()
+                db.add(UserSkill(
+                    user_id=current_user.id,
+                    skill_id=skill.id,
+                    skill_type="teach",
+                    proficiency=s_prof,
+                    endorsements_count=item.get("endorsements_count", 0) if isinstance(item, dict) else 0
+                ))
+
+    # 6. Learning skills
+    if payload.learning_skills is not None:
+        db.query(UserSkill).filter(UserSkill.user_id == current_user.id, UserSkill.skill_type == "learn").delete()
+        for item in payload.learning_skills:
+            s_name = item.get("name") if isinstance(item, dict) else str(item)
+            s_prof = item.get("proficiency", "Beginner") if isinstance(item, dict) else "Beginner"
+            s_clean = s_name.strip()
+            if s_clean:
+                skill = db.query(Skill).filter(Skill.name.ilike(s_clean)).first()
+                if not skill:
+                    skill = Skill(name=s_clean, category="Tech", icon="BookOpen", description=f"Student goal {s_clean}")
+                    db.add(skill)
+                    db.flush()
+                db.add(UserSkill(
+                    user_id=current_user.id,
+                    skill_id=skill.id,
+                    skill_type="learn",
+                    proficiency=s_prof,
+                    endorsements_count=0
+                ))
+
+    db.commit()
+    db.refresh(current_user)
+    return {
+        "message": "Student profile updated successfully!",
+        "user": format_user_profile(current_user, db=db)
+    }
 
 @router.get("/switchable-users")
 def get_switchable_users(db: Session = Depends(get_db)):
